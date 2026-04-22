@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Backend course starting again",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "node index.js"
   },
@@ -13,6 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "mongoose": "^9.5.0"
   }
 }
