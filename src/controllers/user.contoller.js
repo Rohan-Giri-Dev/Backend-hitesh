@@ -1,9 +1,9 @@
 import { asyncHandeler } from "../utils/asyncHandeler.js";
 
-const registerUser = asyncHandeler(async (req, res) =>{
-     res.status(200).json({
-        message: 'ok'
-    })
-})
+const registerUser = asyncHandeler(async (req, res) => {
+  res.status(200).json({
+    message: "Chai aur code",
+  });
+});
 
-export {registerUser}
+export { registerUser };
