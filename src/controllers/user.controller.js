@@ -1,5 +1,5 @@
 import { asyncHandeler } from "../utils/asyncHandeler.js";
-import { ApiError } from "..utils/ApiError.js";
+import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -30,7 +30,7 @@ const registerUser = asyncHandeler(async (req, res) => {
   // this line of code will check if the user already exits or not
   // instead of just using find which only takes 1 parameter
   // we can user $ operator and or . This will take array as the input and inside that we have objects
-  const existedUser = User.findOne({
+  const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
 
@@ -46,7 +46,7 @@ const registerUser = asyncHandeler(async (req, res) => {
   }
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
-  const coerImage = await uploadOnCloudinary(coverImageLocalPath);
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!avatar) {
     throw new ApiError(400, "Avatar file is required");
