@@ -34,7 +34,9 @@ const registerUser = asyncHandler(async (req, res) => {
   // check for user creation
   // return response
 
-  const { fullName, email, username, password } = req.body;
+  console.log(req.body);
+
+  const { fullName, email, username, password } = req.body || {};
   console.log("email: ", email);
 
   //this if condition will check for all parameter through an array
@@ -116,7 +118,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const password = req.body.password; */
   const { email, username, password } = req.body;
 
-  if (!username || !email) {
+  if (!(username && email)) {
     throw new ApiError(400, "username or email is required");
   }
 
