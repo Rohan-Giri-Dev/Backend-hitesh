@@ -352,20 +352,39 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 });
 
 
-const getUserChannelProfile = asyncHandler(async (req, res) =>{
-  const {username} = req.params; // params is used get data from url
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  // username is coming from URL params
+  // Example route: /users/c/:username
+  // If URL is /users/c/aman, then username = "aman"
+  const { username } = req.params;
 
-  if(!username?.trim){
-    throw new ApiError(400, 'Username is missing')
+  // Check if username is missing or only spaces
+  // trim() removes spaces from beginning and end
+  if (!username?.trim()) {
+    throw new ApiError(400, "Username is missing");
   }
 
+  // Aggregation pipeline on User collection
+  // This allows us to fetch user profile + subscriber info in one query
   const channel = await User.aggregate([
     {
+      // Find the user whose username matches the URL username
+      // username is converted to lowercase because usernames are usually stored lowercase
       $match: {
         username: username?.toLowerCase(),
       },
     },
+
     {
+      // First lookup:
+      // Find all subscriptions where this user's _id is the channel
+      //
+      // Meaning:
+      // "Who has subscribed to this user/channel?"
+      //
+      // User._id will be compared with Subscription.channel
+      //
+      // Result will be stored in "subscribers"
       $lookup: {
         from: "subscriptions",
         localField: "_id",
@@ -373,7 +392,17 @@ const getUserChannelProfile = asyncHandler(async (req, res) =>{
         as: "subscribers",
       },
     },
+
     {
+      // Second lookup:
+      // Find all subscriptions where this user's _id is the subscriber
+      //
+      // Meaning:
+      // "Which channels has this user subscribed to?"
+      //
+      // User._id will be compared with Subscription.subscriber
+      //
+      // Result will be stored in "subscribedTo"
       $lookup: {
         from: "subscriptions",
         localField: "_id",
@@ -381,16 +410,29 @@ const getUserChannelProfile = asyncHandler(async (req, res) =>{
         as: "subscribedTo",
       },
     },
+
     {
+      // Add new calculated fields to the user document
       $addFields: {
+        // Count total subscribers of this channel
         subscribersCount: {
           $size: "$subscribers",
         },
+
+        // Count how many channels this user has subscribed to
         channelsSubscribedToCount: {
           $size: "$subscribedTo",
         },
+
+        // Check whether the currently logged-in user is subscribed
+        // to this channel or not
         isSubscribed: {
           $cond: {
+            // "$subscribers.subscriber" gives an array of subscriber ids
+            // req.user?._id is the currently logged-in user's id
+            //
+            // If logged-in user's id exists inside subscribers.subscriber,
+            // then user is subscribed
             if: { $in: [req.user?._id, "$subscribers.subscriber"] },
             then: true,
             else: false,
@@ -398,7 +440,10 @@ const getUserChannelProfile = asyncHandler(async (req, res) =>{
         },
       },
     },
+
     {
+      // Select only the fields we want to send in response
+      // 1 means include this field
       $project: {
         fullName: 1,
         username: 1,
@@ -407,22 +452,25 @@ const getUserChannelProfile = asyncHandler(async (req, res) =>{
         channelsSubscribedToCount: 1,
         isSubscribed: 1,
         avatar: 1,
-        coverImage : 1,
+        coverImage: 1,
       },
     },
   ]);
 
-  if (!channel?.length){
-    throw new ApiError(404, "Channel does not exits")
+  // aggregate always returns an array
+  // If no user is found, channel will be []
+  if (!channel?.length) {
+    throw new ApiError(404, "Channel does not exist");
   }
 
+  // channel[0] is used because aggregate returns array,
+  // but we only need one user profile
   return res
-  .status(200)
-  .json(
-    new ApiResponse(200, channel[0], "User channel fetched successfully")
-  )
-})
-
+    .status(200)
+    .json(
+      new ApiResponse(200, channel[0], "User channel fetched successfully")
+    );
+});
 
 export {
   registerUser,
