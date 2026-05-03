@@ -52,8 +52,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
   // STEP 3: VALIDATE TEXT FIELDS
   // ─────────────────────────────────────────────────────────────
 
-  // ⚠️  BUG HERE: should be (title && description) not (title || description)
-  // Current code: !(title || description) → only fails if BOTH are missing
   // Correct code: !(title && description) → fails if EITHER one is missing
   if (!(title && description)) {
     throw new ApiError(400, "Title and description is required");
@@ -144,7 +142,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
     // ._id is MongoDB's auto-generated unique ID for that user
 
     isPulished: true,
-    // ⚠️  TYPO: "isPulished" should be "isPublished"
     // This is a hardcoded default — when someone uploads, assume they want it live
     // You could also read this from req.body if you want draft functionality:
     // isPublished: req.body.isPublished ?? true
