@@ -194,56 +194,75 @@ const getVideoById = asyncHandler(async (req, res) => {
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
+  // 1. Get the ID of the video that needs updating from the URL parameters.
   const { videoId } = req.params;
-  //TODO: update video details like title, description, thumbnail
+  // NOTE: The developer left a TODO, indicating that other fields (like category, etc.) might be added here later.
+  // TODO: update video details like title, description, thumbnail
 
+  // 2. VALIDATE INPUT: Check if the videoId is provided and if it is a valid MongoDB ObjectId.
   if (!videoId || !isValidObjectId(videoId)) {
+    // If validation fails, throw a 400 Bad Request error.
     throw new ApiError(400, "Error invalid video id");
   }
 
+  // 3. Extract data from the request body (payload).
   const { title, description } = req.body;
+  // The thumbnail path is sourced from the file uploaded via middleware (e.g., Multer).
   const thumbnailPath = req.file?.path;
 
+  // 4. VALIDATE REQUIRED FIELDS: Ensure all necessary data (title, description, and the file) are present.
   if (!title || !description || !thumbnailPath) {
+    // If any required field is missing, throw a 400 error.
     throw new ApiError(
       400,
       "Error , Title, description and thumbnail are required"
     );
   }
-  // check for existing video
+
+  // 5. PRE-CHECK: Retrieve the existing video record using the provided ID.
   const existingVideo = await Video.findById(videoId);
 
+  // 6. VALIDATE RESOURCE EXISTENCE: Check if the video with the given ID actually exists in the database.
   if (!existingVideo) {
     throw new ApiError(404, "Video does not exists");
   }
 
+  // 7. AUTHORIZATION CHECK (SECURITY): Compare the owner ID stored in the database
+  //    with the ID of the currently logged-in user (req.user).
+  //    This ensures that a user can only update content they own.
   if (existingVideo.owner.toString() !== req.user?._id.toString()) {
     throw new ApiError(403, "You are not authorized to update this video");
   }
 
-  //update new thumbnail
+  // 8. PROCESS NEW THUMBNAIL: Upload the newly selected local file path to the cloud storage (Cloudinary).
   const thumbnail = await uploadOnCloudinary(thumbnailPath);
 
+  // 9. VALIDATE FILE UPLOAD: Check if the cloud upload process was successful.
   if (!thumbnail) {
+    // If the upload fails, throw a 500 Internal Server Error.
     throw new ApiError(500, "Error while uploading thumbnails");
   }
 
+  // 10. UPDATE DATABASE: Perform the update operation on the Video collection.
   const video = await Video.findByIdAndUpdate(
     videoId,
     {
+      // $set operator updates the specified fields using the new data.
       $set: {
         title,
         description,
-        thumbnail: thumbnail.url,
+        thumbnail: thumbnail.url, // Use the public URL provided by the cloud service.
       },
     },
-    { new: true }
-  ).select("-owner");
+    { new: true } // { new: true } ensures the returned document is the updated record.
+  ).select("-owner"); // Exclude the owner ID from the final returned video object for cleaner data.
 
+  // 11. SUCCESS RESPONSE: Send a successful response to the client.
   return res
     .status(200)
     .json(new ApiResponse(200, video, "Successfully updated the video "));
 });
+
 
 const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
