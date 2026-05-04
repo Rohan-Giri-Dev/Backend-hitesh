@@ -182,9 +182,7 @@ const getVideoById = asyncHandler(async (req, res) => {
       },
     },
     { new: true }
-  );
-
-  await Video.findById(videoId).select("-owner");
+  ).select("-owner");
 
   if (!video) {
     throw new ApiError(404, "Error no video found");
