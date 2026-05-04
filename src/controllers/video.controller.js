@@ -196,6 +196,53 @@ const getVideoById = asyncHandler(async (req, res) => {
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   //TODO: update video details like title, description, thumbnail
+
+  if (!videoId || !isValidObjectId(videoId)) {
+    throw new ApiError(400, "Error invalid video id");
+  }
+
+  const { title, description } = req.body;
+  const thumbnailPath = req.file?.path;
+
+  if (!title || !description || !thumbnailPath) {
+    throw new ApiError(
+      400,
+      "Error , Title, description and thumbnail are required"
+    );
+  }
+  // check for existing video
+  const existingVideo = await Video.findById(videoId);
+
+  if (!existingVideo) {
+    throw new ApiError(404, "Video does not exists");
+  }
+
+  if (existingVideo.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(403, "You are not authorized to update this video");
+  }
+
+  //update new thumbnail
+  const thumbnail = await uploadOnCloudinary(thumbnailPath);
+
+  if (!thumbnail) {
+    throw new ApiError(500, "Error while uploading thumbnails");
+  }
+
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        title,
+        description,
+        thumbnail: thumbnail.url,
+      },
+    },
+    { new: true }
+  ).select("-owner");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Successfully updated the video "));
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
