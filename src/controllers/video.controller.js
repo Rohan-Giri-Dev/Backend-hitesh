@@ -7,12 +7,73 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
-  // req.query It gives you everything that comes after the ? in the URL.
-  // eg GET /videos?page=2&limit=10&sortBy=views
+  // extract query params, with defaults for pagination
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
-  //TODO: get all videos based on query, sort, pagination
 
-  // fields that
+  // convert to numbers since req.query values are always strings
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+
+  // skip tells MongoDB how many documents to skip for pagination
+  // eg: page 2 with limit 10 → skip 10 documents
+  const skip = (pageNumber - 1) * limitNumber;
+
+  // base filter — only return published videos
+  const filter = { isPublished: true };
+
+  // if search query exists, search in both title and description (case insensitive)
+  if (query) {
+    filter.$or = [
+      { title: { $regex: query, $options: "i" } },
+      { description: { $regex: query, $options: "i" } },
+    ];
+  }
+
+  // if userId is provided, validate it and filter videos by that user
+  if (userId) {
+    if (!isValidObjectId(userId)) {
+      throw new ApiError(400, "Error, invalid user");
+    }
+    filter.owner = userId;
+  }
+
+  // whitelist allowed sort fields to prevent sorting on arbitrary/sensitive fields
+  const allowedSortFields = ["createdAt", "views", "duration", "title"];
+
+  // if sortBy is not in the whitelist, fall back to createdAt
+  const sortField = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
+
+  // asc → 1 (A-Z, oldest first), desc → -1 (Z-A, newest first)
+  const sortOrder = sortType === "asc" ? 1 : -1;
+
+  // mongodb sort object eg: { views: -1 }
+  const sort = { [sortField]: sortOrder };
+
+  // fetch videos with filter, sort, pagination applied
+  // populate replaces owner id with actual user fields from users collection
+  const videos = await Video.find(filter)
+    .sort(sort)
+    .skip(skip)
+    .limit(limitNumber)
+    .populate("owner", "username avatar fullName");
+
+  // separate query to get total count (needed for frontend pagination)
+  const totalVideos = await Video.countDocuments(filter);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        videos,
+        totalVideos,
+        page: pageNumber,
+        limit: limitNumber,
+        // how many pages exist in total eg: 45 videos / 10 per page = 5 pages
+        totalPages: Math.ceil(totalVideos / limitNumber),
+      },
+      "Videos fetched successfully"
+    )
+  );
 });
 
 const publishAVideo = asyncHandler(async (req, res) => {
