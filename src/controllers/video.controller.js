@@ -287,6 +287,34 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+
+  if (!videoId || !isValidObjectId(videoId)) {
+    throw new ApiError(400, "Error, Invalid video id");
+  }
+
+  const existingVideo = await Video.findById(videoId);
+
+  if (!existingVideo) {
+    throw new ApiError(404, "Error , video doesent exists ");
+  }
+
+  if (existingVideo.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(403, "You are not authorized to toggle publish status");
+  }
+
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        isPublished: !existingVideo.isPublished,
+      },
+    },
+    { new: true }
+  ).select("-owner");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video toogle status updated"));
 });
 
 export {

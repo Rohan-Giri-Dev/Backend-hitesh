@@ -12,11 +12,11 @@ const videoSchema = new mongoose.Schema(
       required: true,
     },
     title: {
-      type: String, 
+      type: String,
       required: true,
     },
     description: {
-      type: String, 
+      type: String,
       required: true,
     },
     duration: {
@@ -24,17 +24,17 @@ const videoSchema = new mongoose.Schema(
       required: true,
     },
     views: {
-        type: Number,
-        default: 0,
+      type: Number,
+      default: 0,
     },
-    isPulished: {
-        type: Boolean,
-        default: true,
+    isPublished: {
+      type: Boolean,
+      default: true,
     },
-    owner : {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-    }
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true }
 );
