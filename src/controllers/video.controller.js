@@ -165,8 +165,34 @@ const publishAVideo = asyncHandler(async (req, res) => {
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
-  const { videoId } = req.params;
+  const { videoId } = req.params; // params is used here because we are getting the ID from the url
   //TODO: get video by id
+
+  if (!videoId || !isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid or missing video ID");
+  }
+
+  // here we are getting the video with the help of video id
+  // and updating the views at the same time
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $inc: {
+        views: 1,
+      },
+    },
+    { new: true }
+  );
+
+  await Video.findById(videoId).select("-owner");
+
+  if (!video) {
+    throw new ApiError(404, "Error no video found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video fetched successfully"));
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
