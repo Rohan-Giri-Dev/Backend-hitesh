@@ -9,7 +9,7 @@ const createTweet = asyncHandler(async (req, res) => {
   //TODO: create tweet
 
   const { content } = req.body;
-  const trimmed = content?.trim()
+  const trimmed = content?.trim();
 
   if (!trimmed) {
     throw new ApiError(400, "Error, Content is required");
@@ -33,6 +33,19 @@ const createTweet = asyncHandler(async (req, res) => {
 
 const getUserTweets = asyncHandler(async (req, res) => {
   // TODO: get user tweets
+
+  const {userId} = req.params;
+
+  if(!userId){
+    throw new ApiError(401,"Error, Unauthorized - user not found ");
+  }
+
+  const tweet = await Tweet.findById({owner: userId})
+
+  return res
+  .status(200)
+  .json(200, tweet, "User successfully fetched");
+
 });
 
 const updateTweet = asyncHandler(async (req, res) => {
