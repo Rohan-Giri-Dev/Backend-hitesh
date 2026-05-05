@@ -105,7 +105,7 @@ const deleteComment = asyncHandler(async (req, res) => {
   }
 
   if (existing.owner.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "Unauthorized, you can't delete this comment"); /
+    throw new ApiError(403, "Unauthorized, you can't delete this comment"); 
   }
 
   await Comment.findByIdAndDelete(commentId); 
