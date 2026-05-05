@@ -105,14 +105,14 @@ const deleteComment = asyncHandler(async (req, res) => {
   }
 
   if (existing.owner.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "Unauthorized, you can't delete this comment"); 
+    throw new ApiError(403, "Unauthorized, you can't delete this comment");
   }
 
-  await Comment.findByIdAndDelete(commentId); 
+  await Comment.findByIdAndDelete(commentId);
 
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "Comment deleted successfully")); 
+    .json(new ApiResponse(200, {}, "Comment deleted successfully"));
 });
 
 export { getVideoComments, addComment, updateComment, deleteComment };

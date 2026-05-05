@@ -31,5 +31,14 @@ Throughout this project, I gained hands-on experience with:
 - Managing errors effectively using custom error handling middlewares.
 - Best practices for project structure and clean code.
 
+## 🛠️ Recent Updates & Fixes
+
+- **Dashboard API**: Implemented the `getChannelVideos` controller to retrieve all videos uploaded by the logged-in channel owner.
+- **User Routes**: Resolved typos in the registration endpoint and fixed `req.body` parsing issues for seamless user authentication.
+- **Database**: Troubleshot and secured the connection to MongoDB Atlas.
+
 ---
-*A huge thanks to Hitesh Choudhary for the incredible "Chai aur Code" series!*
+
+## 🙏 Acknowledgments
+
+A massive and heartfelt thanks to **Hitesh Chaudhary Sir** for his incredible dedication to teaching and the phenomenal [Chai aur Code](https://youtube.com/@chaiaurcode) backend series. His ability to break down complex architectural concepts, industry-standard practices, and advanced debugging techniques has been deeply inspiring and instrumental in bringing this project to life. Thank you for empowering the developer community!
